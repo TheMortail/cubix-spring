@@ -5,9 +5,11 @@ import hu.cobix.airport.model.Flight;
 import hu.cobix.airport.repository.AirportRepository;
 import hu.cobix.airport.repository.FlightRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -24,6 +26,9 @@ public class AirportService {
     @Autowired
     private FlightRepository flightRepository;
 
+    @Autowired
+    private LogEntryService logEntryService;
+
     @Transactional
     public Airport create(Airport airport){
         if (findById(airport.getId()) != null){
@@ -36,6 +41,7 @@ public class AirportService {
         if (findById(airport.getId()) == null){
             return null;
         }
+        logEntryService.logAirportChange(airport);
         return save(airport);
     }
     @Transactional
@@ -87,11 +93,34 @@ public class AirportService {
     @Transactional
     public Flight createFlight(long takeoffId, long landingId, String flightNumber, LocalDateTime takeoffTime){
         Airport takeoff = airportRepository.findById(takeoffId).get();
-        Airport landing = airportRepository.findById(takeoffId).get();
+        Airport landing = airportRepository.findById(landingId).get();
         Flight flight = new Flight(takeoff, landing, flightNumber, takeoffTime);
         return flightRepository.save(flight);
     }
 
+    public List<Flight> findFlightByExample(Flight flight){
+        long id = flight.getId();
+        String flightNumber = flight.getFlightNumber();
+        long takeoffId = 0;
+        Airport takeoff = flight.getTakeoff();
+        if (takeoff != null){
+            takeoffId = takeoff.getId();
+        }
+        Specification<Flight> specs = Specification.where(null);
 
+        if (id > 0){
+            specs = specs.and(FlightSpecifications.hasId(id));
+        }
+
+        if (StringUtils.hasLength(flightNumber)){
+            specs = specs.and(FlightSpecifications.flightnumberStartsWith(flightNumber));
+        }
+
+        if (takeoffId > 0){
+            specs = specs.and(FlightSpecifications.flightTakeoffId(takeoffId));
+        }
+
+        return flightRepository.findAll(specs);
+    }
 
 }

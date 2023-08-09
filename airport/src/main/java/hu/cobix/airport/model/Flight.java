@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 public class Flight {
@@ -28,6 +29,19 @@ public class Flight {
         this.landing = landing;
         this.flightNumber = flightNumber;
         this.takeoffTime = takeoffTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Flight flight = (Flight) o;
+        return id == flight.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     public long getId() {

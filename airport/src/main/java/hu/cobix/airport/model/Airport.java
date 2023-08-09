@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQuery;
 
+import java.util.Objects;
+
 //@NamedQuery(
 //        name = "Airport.countByIata",
 //        query = "SELECT COUNT(a) FROM Airport a WHERE a.iata = :iata"
@@ -25,6 +27,19 @@ public class Airport {
         this.id = id;
         this.name = name;
         this.iata = iata;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Airport airport = (Airport) o;
+        return id == airport.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     public Airport() {
