@@ -1,59 +1,68 @@
 package hu.cobix.airport.controller;
 
 import hu.cobix.airport.dto.AirportDto;
-import org.springframework.http.ResponseEntity;
+import hu.cobix.airport.mapper.AirportMapper;
+import hu.cobix.airport.model.Airport;
+import hu.cobix.airport.service.AirportService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/airports")
 public class AirportController {
 
-    private Map<Long, AirportDto> airports = new HashMap<>();
+    @Autowired
+    private AirportService airportService;
 
-    {
-        airports.put(1L, new AirportDto(1L, "Budapest Ferenc Liszt International", "BUD"));
-    }
+    @Autowired
+    private AirportMapper mapper;
 
     @GetMapping
     public List<AirportDto> findAll(){
-        return new ArrayList<>(airports.values());
+        List<Airport> allAirports = airportService.findAll();
+        return mapper.entityListToDto(allAirports);
     }
 
     @PostMapping
-    public ResponseEntity<AirportDto> create(@RequestBody AirportDto dto){
-        if (airports.containsKey(dto.getId())){
-            return ResponseEntity.badRequest().build();
+    public AirportDto create(@RequestBody @Valid AirportDto dto){
+        Airport airport = mapper.dtoToEntity(dto);
+        Airport savedAirport = airportService.create(airport);
+        if (savedAirport == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        airports.put(dto.getId(), dto);
-        return ResponseEntity.ok(dto);
+
+        return mapper.entityToDto(savedAirport);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AirportDto> findById(@PathVariable Long id){
-        AirportDto airportDto = airports.get(id);
-        if (airportDto == null){
-            return ResponseEntity.notFound().build();
+    public AirportDto findById(@PathVariable Long id){
+        Airport airport = airportService.findById(id);
+        if (airport == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok(airportDto);
+        return mapper.entityToDto(airport);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AirportDto> update(@PathVariable Long id, @RequestBody AirportDto dto){
-        dto.setId(id);
-        if (!airports.containsKey(id)){
-            return ResponseEntity.notFound().build();
+    public AirportDto update(@PathVariable long id, @RequestBody @Valid AirportDto dto/*, BindingResult bindingResult*/){
+        dto = new AirportDto(id, dto.name(), dto.iata());
+        Airport airport = mapper.dtoToEntity(dto);
+        Airport updatedAirport = airportService.update(airport);
+
+        if (updatedAirport == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        airports.put(id, dto);
-        return ResponseEntity.ok(dto);
+
+        return mapper.entityToDto(updatedAirport);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id){
-        airports.remove(id);
+    public void delete(@PathVariable long id){
+        airportService.delete(id);
     }
 }
