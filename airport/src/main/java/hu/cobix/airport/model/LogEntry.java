@@ -3,6 +3,7 @@ package hu.cobix.airport.model;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -14,12 +15,14 @@ public class LogEntry {
     private Long id;
     private LocalDateTime ts;
     private String description;
+    private String username;
 
     public LogEntry() {
     }
     public LogEntry(String description) {
         super();
         this.description = description;
+        this.username = SecurityContextHolder.getContext().getAuthentication().getName();
         this.ts = LocalDateTime.now();
     }
 
@@ -58,5 +61,13 @@ public class LogEntry {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
